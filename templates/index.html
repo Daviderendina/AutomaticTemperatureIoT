@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<head>
+   <meta charset='utf-8'>
+   <meta name='viewport' content='width=device-width, initial-scale=1, shrink-to-fit=no'>
+   <link href='https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css' rel='stylesheet' integrity='sha384-wEmeIV1mKuiNpC+IOBjI7aAzPcEZeedi5yW5f2yOq55WWLwNGmvvx4Um1vskeMj0' crossorigin='anonymous'>
+   <title>Temperature control</title>
+</head>
+<html>
+<script>
+    const socket = new WebSocket("127.0.0.1:8181");
+    socket.on('refreshData', function(data) {
+        // Your refresh data logic here (from second controller)
+        // emit the data then 
+        console.log(data);   
+    });
+</script>
+    <body class="vsc-initialized">        
+        <div class="container py-3"> 
+            <header>
+                <div class="d-flex flex-column flex-md-row align-items-center pb-3 mb-4 border-bottom">
+                    <a href="/" class="d-flex align-items-center text-dark text-decoration-none"></a>
+                    <span class="fs-4">Temperature control</span>
+                </div>
+            </header>    
+            {% if l_will == True %}
+                <div class="alert alert-danger" role="alert">
+                    The device with this MAC Address <b>{{mac_add}}</b>, has been shuted down. Something went wrong.
+                </div>
+            {% endif %}       
+            {% if alert|length > 0 %}           
+            <div class="row" > 
+                <div class="card">                   
+                    <div class="card-body">
+                        <h3 class="card-title"> Alert </h3>
+                        {% for singoloAlert in alert %} 
+                            <button type="button" class="btn btn-light" style="border: 1px solid rgba(0,0,0,.125)">
+                                {{alert[singoloAlert]['name']}} 
+                                {%if alert[singoloAlert]['value'] == "off" %}
+                                    <span class="badge badge-success  btn-danger">{{alert[singoloAlert]['value']}}</span>  
+                                {%else %}         
+                                    <span class="badge badge-success  btn-success">{{alert[singoloAlert]['value']}}</span>  
+                                {% endif %}                
+                            </button>  
+                        {% endfor %}            
+                    </div>
+                </div> 
+            </div>  
+            {% endif %}            
+            <div style="width: 100%; margin-top: 23px; height: 2px;"> </div>              
+            <div class="row"> 
+            {% for sensore in update %}
+                {% for prova in status %}                
+                    {% if update[sensore]['name'] == status[prova]['name'] %} 
+                        <div class="col">
+                            <div class="card">
+                                <div class="card-body">                                      
+                                    <form method="POST"> 
+                                        <div class="row">
+                                            <div class="col">
+                                                {{update[sensore]['name']}} : {{update[sensore]['value']}}
+                                                <input type="hidden" name="cambio_valore" value="{{status[prova]['value']}}">
+                                                <input type="hidden" name="invia_valore" value="{{prova}}">
+                                            </div>
+                                            <div class="col">
+                                                {%if status[prova]['value'] == "off" %}
+                                                    <input type="submit" class="btn btn-success" style="width: 100%;" value="{{status[prova]['value']}}">
+                                                {% else %}
+                                                    <input type="submit" class="btn btn-danger" style="width: 100%;" value="{{status[prova]['value']}}">
+                                                {% endif %}  
+                                            </div>    
+                                        </div>   
+                                    </form> 
+                                </div> 
+                            </div>
+                        </div> 
+                    {% endif %}                         
+                {% endfor %}
+            {% endfor %}
+            </div>
+            <main>                 
+                <div style="width: 100%; margin-top: 23px; height: 2px;"> </div>                    
+                <div class="row row-cols-1 row-cols-md-4 mb-4">                    
+                    {% for row in mqt %}
+                        <div class="col">
+                            <div class="card mb-4 rounded-3 shadow-sm">
+                                <div class="card-header py-3">
+                                <h4 class="my-0 fw-normal">{{row['name']}}</h4>
+                                </div>
+                                <div class="card-body">
+                                    <h4 class="card-title pricing-card-title"><small class="text-muted fw-light">{{row['mac']}}</small></h4>
+                                    <ul class="list-unstyled mt-3 mb-4"> 
+                                        <b>Available sensors</b>
+                                        {% for element in row['sensors'] %}
+                                            <li> {{element['measure']}} </li>
+                                        {% endfor %} 
+                                    </ul>
+                                    {%for tr in row['threshold'] %}
+                                        <span> {{tr['name']}}</span>
+                                        <form action="/" method="post">
+                                            <div class="row">
+                                                <div class="col">
+                                                    <input name="{{tr['id']}}" size="7" class="form-control" value="{{tr['value']}}"> 
+                                                    <input type="hidden" name="cambioVal" value="{{tr['id']}}">
+                                                    <input type="hidden" name="whertoPublish" value="{{tr['valueread']}}">
+                                                </div>
+                                                <div class="col">
+                                                    <input type="submit" class="btn btn-secondary" value="Cambia" style="width: 100%;">
+                                                </div>
+                                            </div>   
+                                        </form>                                      
+                                    {% endfor %} 
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}                  
+                 </div>
+            </main>            
+        </div>
+    </body>
+</html>

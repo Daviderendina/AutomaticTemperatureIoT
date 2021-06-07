@@ -1,0 +1,71 @@
+
+-------------- REQUEST --------------
+
+
+
+
+{
+  "MACAddress" : "@MAC",
+  "name" : "Sensor name",
+  "description" : "Sensor description",
+  "deviceType" : "heating, cooling, ...",
+  "threshold" : [
+      {
+        "id":"id",
+        "name" : "Thredhold name",
+        "description" : "Short description of the threshold",
+        "type" : "Integer",
+        "value" : "17"
+      },
+      {
+        "id":"id",
+        "name" : "Thredhold name",
+        "description" : "Short description of the threshold",
+        "type" : "Integer",
+        "value" : "17"
+      }],
+  "sensors" : [
+    {
+      "id" : "id",
+      "name" : "name",
+      "measure" : "",
+      "unit of measure" : ""
+    }
+  ],
+  "observes" : ["temperature", "humidity", "temperaturehumidity"],
+  "alert" : ["windowOpen"]
+}
+
+
+
+-------------- RESPONSE --------------
+
+{
+  "mac" : "MAC",
+  "statusTopic" : "TOPIC",
+  "threshold" : {
+    "TON" : "/rt/devices / <deviceType> / threshold / <mac> / <thresholdID>",
+    "TOFF" : "topic"
+  },
+  "sensor" : {
+    "temperatureSensor" : "topic",
+    "humiditySensor" : "topic"
+  },
+  "observes" : {
+    "temperature" : "TOPIC",
+    "humidity" : "TOPIC",
+    "temperaturehumidity" : "TOPIC"
+  },
+  "database" : {
+    "influxdb_url" : "",
+    "influxdb_token" : "",
+    "influxdb_org" : "",
+    "influxdb_bucket" : "",
+    "influxdb_pointDevice" : ""
+  },
+  "alert" : {
+    "windowOpen" : "TOPIC"
+  }
+  ----
+  "temperaturehumidity" : "TOPIC"
+}
