@@ -62,6 +62,7 @@ class TiltSensor : public Device {
         return;
       }
 
+      pointDevice->clearFields();
       pointDevice->addTag("device", macAddress);
       pointDevice->addField("tilt", tiltValue);
   
