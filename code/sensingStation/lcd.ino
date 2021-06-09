@@ -33,8 +33,7 @@ void updateLCD(){
   printSensorValuesLCD(
     getPrintString(temperatureMeasures.getAverage(), tempStatus),
     getPrintString(humidityMeasures.getAverage(), humidStatus),
-    getPrintString(rssiMeasures.getAverage(), WiFi.status() == WL_CONNECTED),
-    tiltStatus ? String(openWindowCount) : "OFF");
+    getPrintString(rssiMeasures.getAverage(), WiFi.status() == WL_CONNECTED));
 }
 
 String getPrintString(int value, boolean sensorStatus){
@@ -47,7 +46,7 @@ boolean needUnitOfMeasure(String str){
   return ! (str.equals("ERR") || str.equals("OFF"));
 }
 
-void printSensorValuesLCD(String temp_str, String humid_str, String rssi_str, String tiltStr){
+void printSensorValuesLCD(String temp_str, String humid_str, String rssi_str){
   
   lcd.clear();
 
@@ -67,7 +66,4 @@ void printSensorValuesLCD(String temp_str, String humid_str, String rssi_str, St
   
   lcd.print("R: ");   
   lcd.print(rssi_str);
-
-  lcd.print("   W: ");
-  lcd.print(tiltStr);
 }

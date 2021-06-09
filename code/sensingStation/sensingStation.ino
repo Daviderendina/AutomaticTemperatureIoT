@@ -1,3 +1,4 @@
+
 #include "secrets.h"            
 
 #include <LiquidCrystal_I2C.h>  // display library
@@ -57,7 +58,6 @@ char pass[] = SECRET_PASS;
 boolean tempStatus = true;
 boolean humidStatus = true;
 boolean lcdStatus = true;
-boolean tiltStatus = true;
 
 // Flag to force values update
 boolean instantUpdate = false;
@@ -67,12 +67,8 @@ MeasureArrayHandler temperatureMeasures(SIZE_MEASURES_AVG_ARRAY);
 MeasureArrayHandler humidityMeasures(SIZE_MEASURES_AVG_ARRAY);
 MeasureArrayHandler rssiMeasures(SIZE_MEASURES_AVG_ARRAY);
 float heatIndex;
-byte tiltValue;
 String macAddr;
 
-// Variables used in windowTiltControl
-boolean windowAlert = false;
-int openWindowCount = 0;
 
 
 void setup() {
@@ -82,9 +78,9 @@ void setup() {
   WiFi.mode(WIFI_STA);
   
   setupLCD();
-  dht.begin();
+// TODO tolgo anche il LED ?
   
-  pinMode(TILT, INPUT_PULLUP);
+  dht.begin();
 
   pinMode(ALERT_LED, OUTPUT);
   digitalWrite(ALERT_LED, HIGH);
@@ -98,7 +94,6 @@ void setup() {
 
 void loop() {
   static unsigned long timeTemp = TIME_UPDATE_NETWORK;
-  static unsigned long timeTempTiltCheck = TIME_CHECK_TILT;
   static unsigned long timeTempUpdateMeasures = TIME_UPDATE_MEASURES_ARRAY;
   
   // Check WiFi 
@@ -115,15 +110,6 @@ void loop() {
     performDiscovery();
 
   if(discoveryEnded){
-
-    // Check every 500ms if tilt status change
-    if(millis() - timeTempTiltCheck > TIME_CHECK_TILT || instantUpdate){
-      checkTiltChangedAndCommunicateMQTT();
-
-      // Restore auxiliary values
-      timeTempTiltCheck = millis();
-      instantUpdate = false;
-    }
     
     // Read values from sensors and update measure array
     if(millis() - timeTempUpdateMeasures > TIME_UPDATE_MEASURES_ARRAY || instantUpdate){
@@ -145,12 +131,6 @@ void loop() {
     if(millis() - timeTemp > TIME_UPDATE_NETWORK || instantUpdate){ 
       if(humidStatus && tempStatus)
         calculateHeatIndex();
-  
-      if(tiltStatus){
-        readTiltValue();
-      } else {
-        tiltValue = LOW;
-      }
   
       // Update LCD
       if(lcdStatus){
@@ -174,16 +154,6 @@ void loop() {
   }
 }
 
-void checkTiltChangedAndCommunicateMQTT(){
-  byte newTiltValue = digitalRead(TILT);
-  if(newTiltValue != tiltValue){
-    Serial.println(F("Found different tilt status: sending MQTT message"));
-    tiltValue = newTiltValue;
-    
-    publishTiltMQTT();
-  }
-}
-
 void readTemperatureDHT(){
   float tempValue = dht.readTemperature();
   Serial.println("Temp: " + String(tempValue) +"C");
@@ -199,12 +169,6 @@ void readHumidityDHT(){
 void calculateHeatIndex(){
   heatIndex = dht.computeHeatIndex(temperatureMeasures.getAverage(), humidityMeasures.getAverage(), false);
   Serial.println("PercTemp: " + String(heatIndex) +"C");
-}
-
-void readTiltValue(){
-  tiltValue = digitalRead(TILT);
-  Serial.print(F("Tilt value: "));
-  Serial.println(tiltValue == HIGH ? "HIGH" : "LOW");
 }
 
 void connectWifi(){  

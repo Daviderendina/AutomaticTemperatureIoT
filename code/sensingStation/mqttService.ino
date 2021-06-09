@@ -3,9 +3,6 @@
 #define TOPIC_DISCOVERY "rt/discovery"
 #define TOPIC_DISCOVERY_RESPONSE "rt/discovery/response"
 
-String TOPIC_TILT_UPDATE = "";
-String TOPIC_TILT_STATUS = "";
-
 String TOPIC_TEMPERATURE_UPDATE = "";
 String TOPIC_TEMPERATURE_STATUS = "";
 
@@ -16,12 +13,6 @@ String TOPIC_TEMPERATURE_HUMIDITY_UPDATE = "";
 
 String TOPIC_DEVICE_STATUS_CHANGE = "";
 
-String TOPIC_WINDOW_ALERT = "";
-
-
-void publishTiltMQTT(){
-  mqttClient.publish(TOPIC_TILT_UPDATE, tiltValue == 1 ? "open" : "close");
-}
 
 void performDiscovery(){
   Serial.println("Starting discovery procedure");
@@ -41,23 +32,9 @@ void handleDiscoveryResponse(String payload){
 
   if(macAddr == mac){
 
-    // Retrieve measures topic
-    JsonObject obs = response["observes"];
-    String tilt = obs["tilt"];
-    TOPIC_TILT_UPDATE = tilt;
-
-    String devStatus = obs["deviceStatus"];
-    TOPIC_DEVICE_STATUS_CHANGE = devStatus;
-
     // Retrieve sensors topic
     JsonObject sens = response["sensors"];
     
-    JsonObject tiltSens = sens["tilt"];
-    String tiltUpdate = tiltSens["update"];
-    String tiltStatus = tiltSens["status"];
-    TOPIC_TILT_UPDATE = tiltUpdate;
-    TOPIC_TILT_STATUS = tiltStatus;
-
     JsonObject tempSens = sens["temperature"];
     String tempUpdate = tempSens["update"];
     String tempStatus = tempSens["status"];
@@ -70,10 +47,6 @@ void handleDiscoveryResponse(String payload){
     TOPIC_HUMIDITY_UPDATE = humidUpdate;
     TOPIC_HUMIDITY_STATUS = humidStatus;
 
-    // Retrieve alert topic
-    JsonObject alertObj = response["alert"];
-    String alertTopic = alertObj["windowOpen"];
-    TOPIC_WINDOW_ALERT = alertTopic;
 
     // Retrieve special temperaturehumidity topic
     String temperatureHumidity = response["temperaturehumidity"];
@@ -81,18 +54,13 @@ void handleDiscoveryResponse(String payload){
 
     subscribeTopicsMQTT();
 
-    Serial.println("Listening tilt value update on: "+TOPIC_TILT_UPDATE);
     Serial.println("Will communicate temperature on: "+TOPIC_TEMPERATURE_UPDATE);
     Serial.println("Will communicate humidity on: "+TOPIC_HUMIDITY_UPDATE);
     Serial.println("Will communicate temperaturehumidity on: "+TOPIC_TEMPERATURE_HUMIDITY_UPDATE);
-    Serial.println("Will communicate tilt on: "+TOPIC_TILT_UPDATE);
-    Serial.println("Will communicate window alert on: "+TOPIC_WINDOW_ALERT);
     Serial.println("Listening temperature sensor status change on: " + TOPIC_TEMPERATURE_STATUS);
     Serial.println("Listening humidity sensor status change on: " + TOPIC_HUMIDITY_STATUS);
-    Serial.println("Listening tilt sensor status change on: " + TOPIC_TILT_STATUS);
     Serial.println("Listening device status change on: "+TOPIC_DEVICE_STATUS_CHANGE);
     
-
 
     JsonObject dbInfo = response["database"];
     String influxUrl = dbInfo["influxdb_url"];
@@ -123,16 +91,6 @@ void mqttMessageReceived(String &topic, String &payload) {
   
   if(checkTopics(topic, TOPIC_HUMIDITY_STATUS))
     handleSensorStatusChangeReq(payload, humidStatus, "humidity sensor", humidityMeasures, true);
-    
-  if(checkTopics(topic, TOPIC_TILT_STATUS))
-    handleSensorStatusChangeReq(payload, tiltStatus, "window sensor", NULL, false);  
-
-  if(checkTopics(topic, TOPIC_DEVICE_STATUS_CHANGE))
-    handleDeviceStatusChange(payload);
-
-  if(checkTopics(topic, TOPIC_TILT_UPDATE))
-    handleDeviceTiltUpdate(payload);
-
 }
 
 void mqttSetup(){
@@ -162,9 +120,6 @@ void subscribeTopicsMQTT(){
   subscribeSingleTopic(TOPIC_DISCOVERY_RESPONSE);
   subscribeSingleTopic(TOPIC_TEMPERATURE_STATUS);
   subscribeSingleTopic(TOPIC_HUMIDITY_STATUS);
-  subscribeSingleTopic(TOPIC_TILT_STATUS);
-  subscribeSingleTopic(TOPIC_TILT_UPDATE);
-  subscribeSingleTopic(TOPIC_DEVICE_STATUS_CHANGE);
   
   Serial.println(F("Topics subscribe activity completed"));
 }
@@ -199,9 +154,6 @@ void communicateValuesMQTT(float temperature, float humidity){
   }
 }
 
-void communicateAlertMQTT(){
-  mqttClient.publish(TOPIC_WINDOW_ALERT, windowAlert? "on" : "off");
-}
 
 void subscribeSingleTopic(String topic){
   if(topic != "" && topic != NULL && topic != "null")

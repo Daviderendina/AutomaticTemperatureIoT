@@ -12,13 +12,7 @@ int writeMeasures(InfluxDBClient &client_idb, Point &pointDevice) {
     
   if(tempStatus && humidStatus)
     pointDevice.addField("perc_temperature", heatIndex);
-    
-  if(tiltStatus){
-    Serial.println(openWindowCount);
-    pointDevice.addField("open_windows_count", openWindowCount);
-    pointDevice.addField("window_alert", windowAlert ? 1 : 0);
-  }
-  
+   
   Serial.print(F("Writing: "));
   Serial.println(pointDevice.toLineProtocol());
   if (!client_idb.writePoint(pointDevice)) {
@@ -26,19 +20,6 @@ int writeMeasures(InfluxDBClient &client_idb, Point &pointDevice) {
     Serial.println(client_idb.getLastErrorMessage());
   }
   Serial.println(F("Writing finished "));
-}
-
-int writeAlert(InfluxDBClient &client_idb, Point &pointDevice) {
-  pointDevice.clearFields();
-  
-  pointDevice.addField("window_alert", windowAlert ? 1 : 0);
-  
-  Serial.print(F("Writing: "));
-  Serial.println(pointDevice.toLineProtocol());
-  if (!client_idb.writePoint(pointDevice)) {
-    Serial.print(F("InfluxDB write failed: "));
-    Serial.println(client_idb.getLastErrorMessage());
-  }
 }
 
 void writeOnDB(String type){
@@ -61,9 +42,6 @@ void writeOnDB(String type){
   if(type == "measures"){
     writeMeasures(client_idb, pointDevice);
   }
-
-  if(type == "alert")
-    writeAlert(client_idb, pointDevice); 
 }
 
 void initializeInstance(Point &pointDevice){
