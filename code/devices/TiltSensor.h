@@ -9,7 +9,7 @@
 class TiltSensor : public Device {
 
   public:
-    TiltSensor() : Device("TL", false){}
+    TiltSensor() : Device("TL", true){}
 
   private:
     String TOPIC_TILT_UPDATE = "";   // Update tilt value on this topic
@@ -58,7 +58,7 @@ class TiltSensor : public Device {
       Serial.println("TL: logging new status to database instance");
 
       if(!client_idb->validateConnection()){
-        Serial.println("HT: error, cannot reach influxdb instance");
+        Serial.println("TL: error, cannot reach influxdb instance");
         return;
       }
 

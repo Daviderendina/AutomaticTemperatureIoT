@@ -82,7 +82,7 @@ class HeatingDevice : public Device {
     }
 
     void subscribeMQTTTopics(){
-      subscribeSingleTopic(TOPIC_DISCOVERY_RESPONSE);
+      //subscribeSingleTopic(TOPIC_DISCOVERY_RESPONSE);
       subscribeSingleTopic(TOPIC_TEMPERATURE);
       subscribeSingleTopic(TOPIC_THRESHOLD_TON);
       subscribeSingleTopic(TOPIC_THRESHOLD_TOFF);

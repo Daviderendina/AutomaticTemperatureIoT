@@ -120,6 +120,10 @@ class Device {
             discoveryEnded = true;
             Serial.print(deviceID);
             Serial.println(F(": discovery phase finished"));
+            Serial.print(deviceID);
+            Serial.print(F(": unsubscribed from topic"));
+            Serial.println(TOPIC_DISCOVERY_RESPONSE);
+            mqttClient->unsubscribe(TOPIC_DISCOVERY_RESPONSE);
         }
     }
 
@@ -142,8 +146,8 @@ class Device {
 
             discoveryStarted = false;
             discoveryEnded = false;
+            mqttClient->subscribe(TOPIC_DISCOVERY_RESPONSE);
         }
-      mqttClient->subscribe(TOPIC_DISCOVERY_RESPONSE);
       subscribeMQTTTopics();
     }
 
