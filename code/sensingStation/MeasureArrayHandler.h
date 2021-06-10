@@ -1,13 +1,21 @@
 class MeasureArrayHandler {
-  private:
+
+  public:
     short elementsAdded = 0;
     float* measureArray;
     int arraySize;
 
     float lastMean = 0;
 
-  public:
+    
+  
     MeasureArrayHandler(int arraySize){
+      this -> arraySize = arraySize;
+      measureArray = new float[arraySize];
+    }
+
+    MeasureArrayHandler(int arraySize, float lastMean){
+      this -> lastMean = lastMean;
       this -> arraySize = arraySize;
       measureArray = new float[arraySize];
     }

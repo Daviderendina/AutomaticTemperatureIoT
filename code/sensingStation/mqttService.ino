@@ -11,16 +11,14 @@ String TOPIC_HUMIDITY_STATUS = "";
 
 String TOPIC_TEMPERATURE_HUMIDITY_UPDATE = "";
 
-String TOPIC_DEVICE_STATUS_CHANGE = "";
-
 
 void performDiscovery(){
   Serial.println("Starting discovery procedure");
-  discoveryStarted = true;
 
   String description = DESCRIPTION;
   description.replace("@MAC@", macAddr);
 
+  mqttClient.subscribe(TOPIC_DISCOVERY_RESPONSE);
   mqttClient.publish(TOPIC_DISCOVERY, description);
 }
 
@@ -59,7 +57,6 @@ void handleDiscoveryResponse(String payload){
     Serial.println("Will communicate temperaturehumidity on: "+TOPIC_TEMPERATURE_HUMIDITY_UPDATE);
     Serial.println("Listening temperature sensor status change on: " + TOPIC_TEMPERATURE_STATUS);
     Serial.println("Listening humidity sensor status change on: " + TOPIC_HUMIDITY_STATUS);
-    Serial.println("Listening device status change on: "+TOPIC_DEVICE_STATUS_CHANGE);
     
 
     JsonObject dbInfo = response["database"];
@@ -87,10 +84,10 @@ void mqttMessageReceived(String &topic, String &payload) {
     handleDiscoveryResponse(payload);
 
   if(checkTopics(topic, TOPIC_TEMPERATURE_STATUS))
-    handleSensorStatusChangeReq(payload, tempStatus, "temperature sensor", temperatureMeasures, true);
+    handleSensorStatusChangeReq(payload, tempStatus, "temperature sensor", temperatureMeasures, true, temperatureStatusReceived);
   
   if(checkTopics(topic, TOPIC_HUMIDITY_STATUS))
-    handleSensorStatusChangeReq(payload, humidStatus, "humidity sensor", humidityMeasures, true);
+    handleSensorStatusChangeReq(payload, humidStatus, "humidity sensor", humidityMeasures, true, humidityStatusReceived);
 }
 
 void mqttSetup(){
@@ -98,7 +95,7 @@ void mqttSetup(){
   mqttClient.onMessage(mqttMessageReceived);              // callback on message received from MQTT broker
 }
 
-void connectToMQTTBrokerAndSubscribe() {
+void connectToMQTTBroker() {
   if (!mqttClient.connected()) {   // not connected
     Serial.print(F("\nConnecting to MQTT broker..."));
     String lastWillMsg = macAddr + " off";
@@ -109,10 +106,7 @@ void connectToMQTTBrokerAndSubscribe() {
     }
     Serial.println(F("\nConnected!"));
 
-    discoveryStarted = false;
     discoveryEnded = false;
-
-    subscribeTopicsMQTT();
   }
 }
 
@@ -124,20 +118,21 @@ void subscribeTopicsMQTT(){
   Serial.println(F("Topics subscribe activity completed"));
 }
 
-void handleSensorStatusChangeReq(String payload, boolean& statusFlag, String logSensorName, MeasureArrayHandler arrayMeasures, bool arrayMeasuresPresent){
+void handleSensorStatusChangeReq(String payload, boolean& statusFlag, String logSensorName, MeasureArrayHandler arrayMeasures, bool arrayMeasuresPresent, boolean& flag){
   if (payload == "on") {
     statusFlag = true;
-    instantUpdate = true;
     Serial.println("Request received: "+ logSensorName +" ON");
   } else if (payload == "off") {
     if(arrayMeasuresPresent)
       arrayMeasures.clearMeasures();
     statusFlag = false;
-    instantUpdate = true;
     Serial.println("Request received: "+ logSensorName +" OFF");
   } else {
     Serial.println(F("MQTT Payload not recognized, message skipped"));
+    return;
   }
+
+  flag = true;
 }
 
 void communicateValuesMQTT(float temperature, float humidity){

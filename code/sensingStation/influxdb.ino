@@ -22,9 +22,9 @@ int writeMeasures(InfluxDBClient &client_idb, Point &pointDevice) {
   Serial.println(F("Writing finished "));
 }
 
-void writeOnDB(String type){
+void writeOnDB(){
   Serial.println("Updating database");
-  
+
   InfluxDBClient client_idb(
     INFLUXDB_URL.c_str(), 
     INFLUXDB_ORG.c_str(), 
@@ -39,9 +39,7 @@ void writeOnDB(String type){
   
   initializeInstance(pointDevice);
 
-  if(type == "measures"){
-    writeMeasures(client_idb, pointDevice);
-  }
+  writeMeasures(client_idb, pointDevice);
 }
 
 void initializeInstance(Point &pointDevice){
