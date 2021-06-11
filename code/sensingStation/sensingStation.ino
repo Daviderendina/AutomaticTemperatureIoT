@@ -65,6 +65,12 @@ float heatIndex;
 String macAddr;
 int loopCounter;
 
+// EEPROM variables
+short eeprom_init;
+int single_array_measure_size, eprom_size;
+int temp_addr, humid_addr, rssi_addr;
+
+
 
 void setup() {
   // Faccio il setup
@@ -72,135 +78,40 @@ void setup() {
 
   while (!Serial) { }
 
-  // Inizialize EPROM
-  short eeprom_init = 0;
-  int single_array_measure_size = sizeof(float) * (3 + SIZE_MEASURES_AVG_ARRAY);
-  int eprom_size = 3 * single_array_measure_size + sizeof(loopCounter) + sizeof(eeprom_init);
-  Serial.print(F("Initializing EEPROM with size: "));
-  Serial.println(eprom_size);
-  EEPROM.begin(eprom_size);
-  delay(100);
+  initializeEEPROM();
 
-  int temp_addr = sizeof(loopCounter) + sizeof(eeprom_init);
-  int humid_addr = temp_addr + single_array_measure_size;
-  int rssi_addr = humid_addr + single_array_measure_size;
-
-  // Connessione Wifi
   connectWifi();
   macAddr = WiFi.macAddress();
 
-  // Connessione MQTT
   connectToMQTTBroker();
 
-  // Discovery
   performDiscovery();
   while(!discoveryEnded){mqttClient.loop(); delay(5);}
   Serial.println("Finished discovery procedure");
 
-  // Subscribe topics
   humidityStatusReceived = false;
   temperatureStatusReceived = false;
   subscribeTopicsMQTT();
 
   // Aspetto di ricevere notizie
-  Serial.println("Waiting for sensors update");
-  unsigned long timeTemp = millis();
-  unsigned long elapsedTime = 0;
-  while(!(temperatureStatusReceived && humidityStatusReceived)){
-    mqttClient.loop(); 
-    delay(5);
-    elapsedTime = millis() - timeTemp; 
-    delay(5);
-    if(elapsedTime > 5000)
-      break;
-  }
+  waitForSensorStatusUpdateMQTT();
 
-
+  readValuesFromEEPROM();  
   
-  // Leggo dalla EPROM
-  eeprom_init = EEPROM.read(0);
-  Serial.print(F("Reading from EEPROM, init value: "));
-  Serial.println(eeprom_init);
-  if(eeprom_init != 1){
-    Serial.println("Nothing has been initialized yet");
-    loopCounter = 0;
-  } else {
-    temperatureMeasures = readMeasureArray(temp_addr);
-    humidityMeasures = readMeasureArray(humid_addr);
-    rssiMeasures = readMeasureArray(rssi_addr);
-    loopCounter = EEPROM.read(4) + 1;
-  }
-  
-  // Leggo i valori dai sensori e aggiorno gli oggetti
-  Serial.println("Reading values from sensors");
   readSensors();
-
-  Serial.print("Temperature: ");
-  temperatureMeasures.printArray();
-  Serial.print("Humidity: ");
-  humidityMeasures.printArray();
-  Serial.print("RSSI: ");
-  rssiMeasures.printArray();
   
-  // Lo scrivo sulla EPROM
-  Serial.println(F("Writing measures on EEPROM"));
-  saveMeasureArray(temperatureMeasures, temp_addr);
-  saveMeasureArray(humidityMeasures, humid_addr);
-  saveMeasureArray(rssiMeasures, rssi_addr);
-  if(eeprom_init != 1){
-    EEPROM.write(0, 1);
-    EEPROM.commit();
-    delay(300);
-  }
+  writeValuesOnEEPROM();
 
-  // Controllo
-  Serial.println(loopCounter);
-  if(loopCounter == 3)
-    communicateValues();
-
-  EEPROM.write(4, loopCounter % 3);
-  EEPROM.commit();
-  delay(300);
-
-  // Sleep di 10 minuti
+  handleNetworkUpdate();
+  
   Serial.println("Going deep sleep for 10 minutes");
-  ESP.deepSleep(5e6);
-  //ESP.deepSleep(600e6);
-  
+  ESP.deepSleep(600e6);
 }
 
-void readSensors(){
-  if(tempStatus)
-    readTemperatureDHT();
-
-  if(humidStatus)
-    readHumidityDHT();
-
-  int rssiValue= WiFi.RSSI();
-  rssiMeasures.addElement(rssiValue);
-}
-
-void communicateValues(){
-  if(humidStatus && tempStatus)
-      calculateHeatIndex();
-  
-    // Update LCD
-    if(lcdStatus){
-      lcd.setBacklight(255);
-      updateLCD();
-    }
-    else{
-      lcd.setBacklight(0);
-    }
-
-    // Write temperature and humidity on MQTT
-    communicateValuesMQTT(temperatureMeasures.getAverage(), humidityMeasures.getAverage());
-
-    // Update influxDB instance
-    writeOnDB();
-}
 
 void loop() {}
+
+// Hardware
 
 void initializeHardware(){
   Serial.begin(115200);
@@ -216,6 +127,46 @@ void initializeHardware(){
   digitalWrite(CRIT_LED, HIGH);
   
   Serial.println(F("\n\nSetup completed.\n\n"));
+}
+
+void connectWifi(){  
+  digitalWrite(CRIT_LED, LOW);
+  Serial.print(F("Connecting to SSID: "));
+  Serial.println(SECRET_SSID);
+
+  WiFi.begin(ssid, pass);
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(F("."));
+    delay(250);
+  }
+  Serial.print(F("\nConnected to: "));
+  Serial.print(WiFi.SSID());
+  Serial.print(F(" - My IP: "));
+  Serial.println(WiFi.localIP());
+  digitalWrite(CRIT_LED, HIGH);
+}
+
+
+// Sensors read
+
+void readSensors(){
+  if(tempStatus)
+    readTemperatureDHT();
+
+  if(humidStatus)
+    readHumidityDHT();
+
+  int rssiValue= WiFi.RSSI();
+  rssiMeasures.addElement(rssiValue);
+
+  if(MEMORY_DEBUG == 1){
+    Serial.print("Temperature: ");
+    temperatureMeasures.printArray();
+    Serial.print("Humidity: ");
+    humidityMeasures.printArray();
+    Serial.print("RSSI: ");
+    rssiMeasures.printArray();
+  }
 }
 
 void readTemperatureDHT(){
@@ -237,21 +188,98 @@ void calculateHeatIndex(){
   Serial.println("PercTemp: " + String(heatIndex) +"C");
 }
 
-void connectWifi(){  
-  digitalWrite(CRIT_LED, LOW);
-  Serial.print(F("Connecting to SSID: "));
-  Serial.println(SECRET_SSID);
 
-  WiFi.begin(ssid, pass);
-  while (WiFi.status() != WL_CONNECTED) {
-    Serial.print(F("."));
-    delay(250);
+// Other
+
+void communicateValues(){
+  if(humidStatus && tempStatus)
+      calculateHeatIndex();
+  
+    // Update LCD
+    if(lcdStatus){
+      lcd.setBacklight(255);
+      updateLCD();
+    }
+    else{
+      lcd.setBacklight(0);
+    }
+
+    // Write temperature and humidity on MQTT
+    communicateValuesMQTT(temperatureMeasures.getAverage(), humidityMeasures.getAverage());
+
+    // Update influxDB instance
+    writeOnDB();
+}
+
+void waitForSensorStatusUpdateMQTT(){
+  Serial.println("Waiting for sensors update");
+  unsigned long timeTemp = millis();
+  unsigned long elapsedTime = 0;
+  while(!(temperatureStatusReceived && humidityStatusReceived)){
+    mqttClient.loop(); 
+    delay(5);
+    elapsedTime = millis() - timeTemp; 
+    delay(5);
+    if(elapsedTime > 5000)
+      break;
   }
-  Serial.print(F("\nConnected to: "));
-  Serial.print(WiFi.SSID());
-  Serial.print(F(" - My IP: "));
-  Serial.println(WiFi.localIP());
-  digitalWrite(CRIT_LED, HIGH);
+
+}
+
+void handleNetworkUpdate(){
+  Serial.println(F("Actual loop counter value: "));
+  Serial.println(loopCounter);
+  if(loopCounter == 3)
+    communicateValues();
+
+  EEPROM.write(4, loopCounter % 3);
+  EEPROM.commit();
+  delay(300);
+}
+
+
+// EEPROM 
+
+void initializeEEPROM(){
+  eeprom_init = 0;
+  single_array_measure_size = sizeof(float) * (3 + SIZE_MEASURES_AVG_ARRAY);
+  eprom_size = 3 * single_array_measure_size + sizeof(loopCounter) + sizeof(eeprom_init);
+
+  temp_addr = sizeof(loopCounter) + sizeof(eeprom_init);
+  humid_addr = temp_addr + single_array_measure_size;
+  rssi_addr = humid_addr + single_array_measure_size;
+  
+  Serial.print(F("Initializing EEPROM with size: "));
+  Serial.println(eprom_size);
+  EEPROM.begin(eprom_size);
+  delay(100);
+}
+
+void readValuesFromEEPROM(){
+  eeprom_init = EEPROM.read(0);
+  Serial.print(F("Reading from EEPROM, init value: "));
+  Serial.println(eeprom_init);
+  if(eeprom_init != 1){
+    Serial.println("Nothing has been initialized yet");
+    loopCounter = 0;
+  } else {
+    temperatureMeasures = readMeasureArray(temp_addr);
+    humidityMeasures = readMeasureArray(humid_addr);
+    rssiMeasures = readMeasureArray(rssi_addr);
+    loopCounter = EEPROM.read(4) + 1;
+  }
+}
+
+void writeValuesOnEEPROM(){
+  Serial.println(F("Writing measures on EEPROM"));
+  saveMeasureArray(temperatureMeasures, temp_addr);
+  saveMeasureArray(humidityMeasures, humid_addr);
+  saveMeasureArray(rssiMeasures, rssi_addr);
+  if(eeprom_init != 1){
+    EEPROM.write(0, 1);
+    EEPROM.commit();
+    delay(300);
+  }
 }
 
 MeasureArrayHandler readMeasureArray(int mem_addr){
