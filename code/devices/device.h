@@ -231,6 +231,10 @@ class Device {
 
         loopExtra();
     }
+
+    boolean getStatus(){
+      return this->deviceStatus;
+    }
 };
 
 

@@ -1,5 +1,3 @@
-#define MEMORY_DEBUG 0
-
 #include "secrets.h"            
 
 #include <LiquidCrystal_I2C.h>  // display library
@@ -27,6 +25,7 @@
 
 // Software constants
 #define SIZE_MEASURES_AVG_ARRAY    3         // Store last 3 values measured
+#define MEMORY_DEBUG 0
 
 
 // Initialize objects for sensors
