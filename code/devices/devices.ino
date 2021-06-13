@@ -83,10 +83,10 @@ void simulationSetup(){
   
   // USED ONLY FOR SHOWING VALUES DURING THE SIMULATION
   mqttClient.begin(MQTT_BROKERIP, 1883, networkClient);
-  mqttClient.onMessage(messageReceived);
+  mqttClient.onMessage(simulationMessageReceived);
 
   pinMode(D5, OUTPUT);
-  digitalWrite(D5, LOW);
+  digitalWrite(D5, HIGH);
 }
 
 void simulationLoop(){
@@ -132,8 +132,7 @@ void simulationLoop(){
   }
 }
 
-
-void messageReceived(String &topic, String &payload){
+void simulationMessageReceived(String &topic, String &payload){
   Serial.println("SIMULATION: msg received "+ payload);
   if(payload == "on"){
     Serial.println("SIMULATION: turn off led");

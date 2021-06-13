@@ -95,6 +95,8 @@ void setup() {
   // Aspetto di ricevere notizie
   waitForSensorStatusUpdateMQTT();
 
+  temperatureMeasures.printArray();
+
   readValuesFromEEPROM();  
   
   readSensors();

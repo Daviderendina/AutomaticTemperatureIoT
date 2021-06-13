@@ -8,14 +8,15 @@
 
 #include "secrets.h"
 
+
 char ssid[] = SECRET_SSID;
 char pass[] = SECRET_PASS;
 
-// -- TODO probabilmente tutto quello sopra si può togliere
 
 #define TOPIC_DISCOVERY "rt/discovery"
 #define TOPIC_DISCOVERY_RESPONSE "rt/discovery/response"
 #define UPDATE_TIME 1800000
+
 
 class Device {
 

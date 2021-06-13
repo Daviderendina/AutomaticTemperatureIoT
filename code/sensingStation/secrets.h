@@ -5,7 +5,7 @@
 #define SECRET_PASS "amyp6phh95y6h2me"              // WiFi password
 
 // MQTT
-#define MQTT_BROKERIP "149.132.178.180"           // IP address of the machine running the MQTT broker
+#define MQTT_BROKERIP "broker.hivemq.com" //"149.132.178.180"           // IP address of the machine running the MQTT broker
 #define MQTT_CLIENTID "drendina2sensorStation"                 // client identifier
 #define MQTT_USERNAME "drendina2"            // mqtt user's name
 #define MQTT_PASSWORD "iot830730"            // mqtt user's password
