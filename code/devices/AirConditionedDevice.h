@@ -63,11 +63,8 @@ class AirConditionedDevice : public Device {
       Serial.println("AC: Listening HHIHG on: "+TOPIC_THRESHOLD_HUMID);
       Serial.println("AC: Listening temperature and humidity on: "+TOPIC_TEMPERATUREHUMIDITY);
       Serial.println("AC: Will communicate status on: "+TOPIC_STATUS_CHANGE);
-
-      subscribeSingleTopic(TOPIC_THRESHOLD_TEMPMED);
-      subscribeSingleTopic(TOPIC_THRESHOLD_TEMPHIGH);
-      subscribeSingleTopic(TOPIC_THRESHOLD_HUMID);
-      subscribeSingleTopic(TOPIC_TEMPERATUREHUMIDITY);
+      
+      //subscribeMQTTTopics();
     }
 
     void logStatusChangeInflux(){
@@ -163,6 +160,13 @@ class AirConditionedDevice : public Device {
         comunicateStatusChangeMQTT();
         logStatusChangeInflux();
       }
+    }
+
+    void handleStatusOnServerReq(){
+      String description = generateDiscoveryDescriptionMQTT();
+      mqttClient->publish(TOPIC_DISCOVERY, description);
+
+      comunicateStatusChangeMQTT();
     }
 
     void comunicateStatusChangeMQTT(){

@@ -77,6 +77,13 @@ void handleDiscoveryResponse(String payload){
   }
 }
 
+void communicateSensorStatus(){
+  mqttClient.unsubscribe(TOPIC_TEMPERATURE_STATUS);
+  mqttClient.publish(TOPIC_TEMPERATURE_STATUS, tempStatus ? "on" : "off");
+  mqttClient.unsubscribe(TOPIC_HUMIDITY_STATUS);
+  mqttClient.publish(TOPIC_HUMIDITY_STATUS, humidStatus ? "on" : "off");
+}
+
 void mqttMessageReceived(String &topic, String &payload) {
   Serial.println("Incoming MQTT message: " + topic + " - " + payload);
 

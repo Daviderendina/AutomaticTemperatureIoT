@@ -16,7 +16,7 @@ because we can show the change of status and values in photos and videos.
 
 // SIMULATION
 #include <LiquidCrystal_I2C.h>  // display library
-MQTTClient mqttClient(2048);
+MQTTClient mqttClientSimulation(2048);
 WiFiClient networkClient;
 bool acStatus = false, htStatus = false;
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -82,8 +82,8 @@ void simulationSetup(){
   Serial.println(F("\n\nLCD connection OK"));
   
   // USED ONLY FOR SHOWING VALUES DURING THE SIMULATION
-  mqttClient.begin(MQTT_BROKERIP, 1883, networkClient);
-  mqttClient.onMessage(simulationMessageReceived);
+  mqttClientSimulation.begin(MQTT_BROKERIP, 1883, networkClient);
+  mqttClientSimulation.onMessage(simulationMessageReceived);
 
   pinMode(D5, OUTPUT);
   digitalWrite(D5, HIGH);
@@ -101,20 +101,20 @@ void simulationLoop(){
   }
 
   // mqtt Client connection
-  if (!mqttClient.connected()) {   // not connected
+  if (!mqttClientSimulation.connected()) {   // not connected
     Serial.println(F("SIMULATION: Connecting to MQTT broker..."));
     String clientId = MQTT_CLIENTID + String("simulation");
 
-    while (!mqttClient.connect(clientId.c_str(), MQTT_USERNAME, MQTT_PASSWORD)) {
+    while (!mqttClientSimulation.connect(clientId.c_str(), MQTT_USERNAME, MQTT_PASSWORD)) {
       Serial.print(F("."));
       delay(1000);
     }
     Serial.println(F("SIMULATION: Connected!"));
 
-    mqttClient.subscribe("rt/alert/windowOpen");
+    mqttClientSimulation.subscribe("rt/alert/windowOpen");
   }
         
-  mqttClient.loop();
+  mqttClientSimulation.loop();
 
   if(htStatus != heating->getStatus() || acStatus != ac->getStatus()){
     htStatus = heating->getStatus();

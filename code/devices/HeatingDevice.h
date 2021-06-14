@@ -56,9 +56,8 @@ class HeatingDevice : public Device {
       Serial.println("HT: Listening TOFF on: " + TOPIC_THRESHOLD_TOFF);
       Serial.println("HT: Listening temperature on: " + TOPIC_TEMPERATURE);
       Serial.println("HT: Will communicate status on: " + TOPIC_STATUS_CHANGE);
-      subscribeSingleTopic(TOPIC_TEMPERATURE);
-      subscribeSingleTopic(TOPIC_THRESHOLD_TON);
-      subscribeSingleTopic(TOPIC_THRESHOLD_TOFF);
+
+      subscribeMQTTTopics();
     }
 
     void logStatusChangeInflux(){
@@ -82,7 +81,6 @@ class HeatingDevice : public Device {
     }
 
     void subscribeMQTTTopics(){
-      //subscribeSingleTopic(TOPIC_DISCOVERY_RESPONSE);
       subscribeSingleTopic(TOPIC_TEMPERATURE);
       subscribeSingleTopic(TOPIC_THRESHOLD_TON);
       subscribeSingleTopic(TOPIC_THRESHOLD_TOFF);
@@ -148,5 +146,12 @@ class HeatingDevice : public Device {
       discoveryMessage.replace("@MAC@", macAddress);
 
       return discoveryMessage;
+    }
+
+    void handleStatusOnServerReq(){
+      String description = generateDiscoveryDescriptionMQTT();
+      mqttClient->publish(TOPIC_DISCOVERY, description);
+
+      comunicateStatusChangeMQTT();
     }
 };

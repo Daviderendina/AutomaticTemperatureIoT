@@ -15,6 +15,7 @@ char pass[] = SECRET_PASS;
 
 #define TOPIC_DISCOVERY "rt/discovery"
 #define TOPIC_DISCOVERY_RESPONSE "rt/discovery/response"
+
 #define UPDATE_TIME 1800000
 
 
@@ -105,8 +106,12 @@ class Device {
       String topicStr = String(topic);
       String payload = String(bytes);
 
-      if(strcmp(topic, TOPIC_DISCOVERY_RESPONSE) == 0 && ! thisDevice->discoveryEnded)
-          thisDevice->handleDiscoveryResponse(payload);
+      if(strcmp(topic, TOPIC_DISCOVERY_RESPONSE) == 0){
+          if(strcmp(bytes, "update_request") == 0 && thisDevice->discoveryEnded)
+            thisDevice->handleStatusOnServerReq();
+          else if(! thisDevice->discoveryEnded)
+            thisDevice->handleDiscoveryResponse(payload);
+      }
       else
           thisDevice->handleDeviceMessageReceivedMQTT(topicStr, payload);
     }
@@ -122,14 +127,15 @@ class Device {
             Serial.print(deviceID);
             Serial.println(F(": discovery phase finished"));
             Serial.print(deviceID);
-            Serial.print(F(": unsubscribed from topic"));
-            Serial.println(TOPIC_DISCOVERY_RESPONSE);
-            mqttClient->unsubscribe(TOPIC_DISCOVERY_RESPONSE);
+            //Serial.print(F(": unsubscribed from topic"));
+            //Serial.println(TOPIC_DISCOVERY_RESPONSE);
+            //mqttClient->unsubscribe(TOPIC_DISCOVERY_RESPONSE);
+            subscribeMQTTTopics();
         }
     }
 
     void connectToMQTTBroker() {
-        if (!mqttClient->connected()) {   // not connected
+        if (!this->mqttClient->connected()) {   // not connected
             Serial.print(deviceID);
             Serial.println(F(": Connecting to MQTT broker..."));
 
@@ -199,6 +205,8 @@ class Device {
     virtual void setupExtra() = 0;
     
     virtual void loopExtra() = 0;
+
+    virtual void handleStatusOnServerReq() = 0;
 
     
 

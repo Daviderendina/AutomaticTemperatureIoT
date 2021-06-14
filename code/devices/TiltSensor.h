@@ -48,10 +48,12 @@ class TiltSensor : public Device {
   
       Serial.println("TL: Listening status on: " + TOPIC_TILT_STATUS);
       Serial.println("TL: Will communicate tilt on: " + TOPIC_TILT_UPDATE);
-      subscribeSingleTopic(TOPIC_TILT_STATUS);
+
+      subscribeMQTTTopics();
 
       JsonObject dbObj = response["database"];
       initializeDatabase(dbObj);
+
     }
 
     void logStatusChangeInflux(){
@@ -100,5 +102,12 @@ class TiltSensor : public Device {
       discoveryMessage.replace("@MAC@", macAddress);
 
       return discoveryMessage;
+    }
+
+    void handleStatusOnServerReq(){
+      String description = generateDiscoveryDescriptionMQTT();
+      mqttClient->publish(TOPIC_DISCOVERY, description);
+      mqttClient->publish(TOPIC_TILT_STATUS, tiltStatus ? "on" : "off");
+
     }
 };

@@ -17,9 +17,6 @@
 #define CRIT_LED D7  
 
 // Costant for hardware
-#define DISPLAY_CHARS 16    // number of characters on a line
-#define DISPLAY_LINES 2     // number of display lines
-#define DISPLAY_ADDR 0x27   // display address on I2C bus
 #define DHTTYPE DHT11   // sensor type DHT 11
 #define BUTTON_DEBOUNCE_DELAY 20  // Button debounce
 
@@ -30,7 +27,6 @@
 
 // Initialize objects for sensors
 DHT dht = DHT(DHTPIN, DHTTYPE);
-LiquidCrystal_I2C lcd(DISPLAY_ADDR, DISPLAY_CHARS, DISPLAY_LINES);   // display object
 
 // MQTT Communication
 MQTTClient mqttClient(2048);                    
@@ -54,7 +50,6 @@ char pass[] = SECRET_PASS;
 // Sensor status (ON/OFF) flags 
 boolean tempStatus = true;
 boolean humidStatus = true;
-boolean lcdStatus = true;
 
 // Global variables for values
 MeasureArrayHandler temperatureMeasures(SIZE_MEASURES_AVG_ARRAY);
@@ -95,7 +90,15 @@ void setup() {
   // Aspetto di ricevere notizie
   waitForSensorStatusUpdateMQTT();
 
+  // Communicate status of its sensor on the network
+  communicateSensorStatus();
+
+  Serial.print("Temperature: ");
   temperatureMeasures.printArray();
+  Serial.print("Humidity: ");
+  humidityMeasures.printArray();
+  Serial.print("RSSI: ");
+  rssiMeasures.printArray();
 
   readValuesFromEEPROM();  
   
@@ -119,8 +122,6 @@ void initializeHardware(){
 
   mqttSetup();
   WiFi.mode(WIFI_STA);
-  
-  setupLCD();
   
   dht.begin();
   
@@ -174,14 +175,16 @@ void readTemperatureDHT(){
   delay(2000);
   float tempValue = dht.readTemperature();
   Serial.println("Temp: " + String(tempValue) +"C");
-  temperatureMeasures.addElement(tempValue);
+  if(! is.nan(tempValue))
+    temperatureMeasures.addElement(tempValue);
 }
 
 void readHumidityDHT(){
   delay(2000);
   float humidValue = dht.readHumidity();
   Serial.println("Humidity: " + String(humidValue) +"%");
-  humidityMeasures.addElement(humidValue);
+  if(! is.nan(humidValue))
+    humidityMeasures.addElement(humidValue);
 }
 
 void calculateHeatIndex(){
@@ -195,15 +198,6 @@ void calculateHeatIndex(){
 void communicateValues(){
   if(humidStatus && tempStatus)
       calculateHeatIndex();
-  
-    // Update LCD
-    if(lcdStatus){
-      lcd.setBacklight(255);
-      updateLCD();
-    }
-    else{
-      lcd.setBacklight(0);
-    }
 
     // Write temperature and humidity on MQTT
     communicateValuesMQTT(temperatureMeasures.getAverage(), humidityMeasures.getAverage());
@@ -224,7 +218,6 @@ void waitForSensorStatusUpdateMQTT(){
     if(elapsedTime > 5000)
       break;
   }
-
 }
 
 void handleNetworkUpdate(){
