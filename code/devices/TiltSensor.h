@@ -3,7 +3,7 @@
 
 #include "device.h"
 
-#define TILT D5 
+#define TILT D7 
 
 
 class TiltSensor : public Device {
@@ -16,14 +16,18 @@ class TiltSensor : public Device {
     String TOPIC_TILT_STATUS = "";   // Listen tilt status change (on/off tilt sensors)
     boolean tiltStatus = true;
     byte tiltValue;
+    long timeTemp = 0;
 
 
     void loopExtra() {
-      byte newTiltValue = digitalRead(TILT);
-      if(newTiltValue != tiltValue){
-        Serial.println("TL: Found different tilt status: " + String(newTiltValue));
-        tiltValue = newTiltValue;
-        comunicateNewTiltMQTT(tiltValue);
+      if(millis() - timeTemp > 1000){
+        byte newTiltValue = digitalRead(TILT);
+        if(newTiltValue != tiltValue){
+          Serial.println("TL: Found different tilt status: " + String(newTiltValue));
+          tiltValue = newTiltValue;
+          comunicateNewTiltMQTT(tiltValue);
+        }
+        timeTemp = millis();
       }
     }
 

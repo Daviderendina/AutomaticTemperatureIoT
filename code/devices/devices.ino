@@ -19,7 +19,8 @@ because we can show the change of status and values in photos and videos.
 MQTTClient mqttClientSimulation(2048);
 WiFiClient networkClient;
 bool acStatus = false, htStatus = false;
-LiquidCrystal_I2C lcd(0x27, 16, 2);
+#define DISPLAY_ADDR 0x27   // display address on I2C bus
+LiquidCrystal_I2C lcd(DISPLAY_ADDR, 16, 2);
 
 
 void setup() {
@@ -53,7 +54,7 @@ void simulationSetup(){
   // LCD
   Serial.println(F("\n\nChecking LCD connection..."));
   Wire.begin();
-  Wire.beginTransmission(0x27);
+  Wire.beginTransmission(DISPLAY_ADDR);
   byte error = Wire.endTransmission();
   if (error == 0) {
     Serial.println(F("LCD found."));
@@ -63,7 +64,6 @@ void simulationSetup(){
     Serial.println(error);
     Serial.println(F("Check connections and configuration. Reset to try again!"));
     while (true){
-      Serial.println(F("Delay 1 - error"));
       delay(1);
     }
   }
