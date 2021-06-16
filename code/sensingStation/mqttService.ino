@@ -12,11 +12,18 @@ String TOPIC_HUMIDITY_STATUS = "";
 String TOPIC_TEMPERATURE_HUMIDITY_UPDATE = "";
 
 
-void performDiscovery(){
+void performDiscovery(){, 'status' : '@@', 'value' : '@@'
   Serial.println("Starting discovery procedure");
 
   String description = DESCRIPTION;
   description.replace("@MAC@", macAddr);
+  
+  description.replace("@TEMPSTATUS@", tempStatus ? "on" : "off");
+  description.replace("@HUMIDSTATUS@", humidStatus ? "on" : "off");
+  int lastValue = temperatureMeasures.getAverage();
+  description.replace("@TEMPVALUE@", String(lastValue));
+  lastValue = humidityMeasures.getAverage();
+  description.replace("@HUMIDVALUE@", String(lastValue));
 
   mqttClient.subscribe(TOPIC_DISCOVERY_RESPONSE);
   mqttClient.publish(TOPIC_DISCOVERY, description);

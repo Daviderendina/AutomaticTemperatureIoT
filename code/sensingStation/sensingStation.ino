@@ -175,7 +175,7 @@ void readTemperatureDHT(){
   delay(2000);
   float tempValue = dht.readTemperature();
   Serial.println("Temp: " + String(tempValue) +"C");
-  if(! is.nan(tempValue))
+  if(! isnan(tempValue))
     temperatureMeasures.addElement(tempValue);
 }
 
@@ -183,7 +183,7 @@ void readHumidityDHT(){
   delay(2000);
   float humidValue = dht.readHumidity();
   Serial.println("Humidity: " + String(humidValue) +"%");
-  if(! is.nan(humidValue))
+  if(! isnan(humidValue))
     humidityMeasures.addElement(humidValue);
 }
 
