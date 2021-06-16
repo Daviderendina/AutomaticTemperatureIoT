@@ -13,8 +13,8 @@ char ssid[] = SECRET_SSID;
 char pass[] = SECRET_PASS;
 
 
-#define TOPIC_DISCOVERY "rt/discovery"
-#define TOPIC_DISCOVERY_RESPONSE "rt/discovery/response"
+#define TOPIC_DISCOVERY "rt2/discovery"
+#define TOPIC_DISCOVERY_RESPONSE "rt2/discovery/response"
 
 #define UPDATE_TIME 1800000
 

@@ -1,7 +1,7 @@
 #include "description.h"
 
-#define TOPIC_DISCOVERY "rt/discovery"
-#define TOPIC_DISCOVERY_RESPONSE "rt/discovery/response"
+#define TOPIC_DISCOVERY "rt2/discovery"
+#define TOPIC_DISCOVERY_RESPONSE "rt2/discovery/response"
 
 String TOPIC_TEMPERATURE_UPDATE = "";
 String TOPIC_TEMPERATURE_STATUS = "";
@@ -12,7 +12,7 @@ String TOPIC_HUMIDITY_STATUS = "";
 String TOPIC_TEMPERATURE_HUMIDITY_UPDATE = "";
 
 
-void performDiscovery(){, 'status' : '@@', 'value' : '@@'
+void performDiscovery(){
   Serial.println("Starting discovery procedure");
 
   String description = DESCRIPTION;
@@ -36,6 +36,8 @@ void handleDiscoveryResponse(String payload){
   const char *mac = response["mac"];
 
   if(macAddr == mac){
+    
+    discoveryEnded = true;
 
     // Retrieve sensors topic
     JsonObject sens = response["sensors"];
@@ -57,7 +59,7 @@ void handleDiscoveryResponse(String payload){
     String temperatureHumidity = response["temperaturehumidity"];
     TOPIC_TEMPERATURE_HUMIDITY_UPDATE = temperatureHumidity;
 
-    subscribeTopicsMQTT();
+    //subscribeTopicsMQTT();
 
     Serial.println("Will communicate temperature on: "+TOPIC_TEMPERATURE_UPDATE);
     Serial.println("Will communicate humidity on: "+TOPIC_HUMIDITY_UPDATE);
@@ -79,7 +81,6 @@ void handleDiscoveryResponse(String payload){
     INFLUXDB_BUCKET = infuxBucket;
     POINT_DEVICE = influxPointDeviceName;
     
-    discoveryEnded = true;
     Serial.println(F("Discovery phase finished"));
   }
 }
@@ -125,11 +126,10 @@ void connectToMQTTBroker() {
 }
 
 void subscribeTopicsMQTT(){
-  subscribeSingleTopic(TOPIC_DISCOVERY_RESPONSE);
-  subscribeSingleTopic(TOPIC_TEMPERATURE_STATUS);
-  subscribeSingleTopic(TOPIC_HUMIDITY_STATUS);
-  
   Serial.println(F("Topics subscribe activity completed"));
+  subscribeSingleTopic(TOPIC_DISCOVERY_RESPONSE, 0);
+  subscribeSingleTopic(TOPIC_TEMPERATURE_STATUS, 1);
+  subscribeSingleTopic(TOPIC_HUMIDITY_STATUS, 1);
 }
 
 void handleSensorStatusChangeReq(String payload, boolean& statusFlag, String logSensorName, MeasureArrayHandler arrayMeasures, bool arrayMeasuresPresent, boolean& flag){
@@ -164,9 +164,9 @@ void communicateValuesMQTT(float temperature, float humidity){
 }
 
 
-void subscribeSingleTopic(String topic){
+void subscribeSingleTopic(String topic, int QoS){
   if(topic != "" && topic != NULL && topic != "null")
-    mqttClient.subscribe(topic);
+    mqttClient.subscribe(topic, QoS);
 }
 
 bool checkTopics(String topic1, String topic2){

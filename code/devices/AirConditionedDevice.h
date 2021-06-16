@@ -1,7 +1,7 @@
 #include "device.h"
 
 // Use @MAC@ and MAC address will be added automatically
-#define DESCRIPTION "{ 'mac': '@MAC@', 'name': 'Cooling', 'description': 'Sensor description', 'type': 'cooling', 'observes': [ 'temperaturehumidity'], 'threshold': [ { 'id': 'TMED', 'name': 'Temperatura media', 'type': 'Integer', 'value' : '@TMED@' }, { 'id': 'THIGH', 'name': 'Temperatura alta', 'type': 'Integer', 'value' : '@THIGH@' }, { 'id': 'HHIGH', 'name': 'Umidità alta', 'type': 'Integer', 'value' : '@HHIGH@' } ] }"
+#define DESCRIPTION "{ 'mac': '@MAC@', 'name': 'Cooling', 'description': 'Sensor description', 'type': 'cooling', 'deviceStatus' : '@DEVSTATUS@', 'observes': [ 'temperaturehumidity'], 'threshold': [ { 'id': 'TMED', 'name': 'Temperatura media', 'type': 'Integer', 'value' : '@TMED@' }, { 'id': 'THIGH', 'name': 'Temperatura alta', 'type': 'Integer', 'value' : '@THIGH@' }, { 'id': 'HHIGH', 'name': 'Umidità alta', 'type': 'Integer', 'value' : '@HHIGH@' } ] }"
 
 // Default value for threshold THIGH, which indicate the limit temperature for turning on air conditioned.
 #define TEMPERATURE_HIGH_DEFAULT 32
@@ -165,8 +165,6 @@ class AirConditionedDevice : public Device {
     void handleStatusOnServerReq(){
       String description = generateDiscoveryDescriptionMQTT();
       mqttClient->publish(TOPIC_DISCOVERY, description);
-
-      comunicateStatusChangeMQTT();
     }
 
     void comunicateStatusChangeMQTT(){
@@ -182,6 +180,7 @@ class AirConditionedDevice : public Device {
       discoveryMessage.replace("@THIGH@", String(TEMPERATURE_HIGH));
       discoveryMessage.replace("@TMED@", String(TEMPERATURE_MED));
       discoveryMessage.replace("@MAC@", String(macAddress));
+      discoveryMessage.replace("@DEVSTATUS@", deviceStatus ? "on" : "off");
 
       return discoveryMessage;
     }

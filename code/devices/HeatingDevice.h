@@ -1,7 +1,7 @@
 // Use @MAC@ and MAC address will be added automatically
 // Use @TON@ string in SENSOR_DESCRIPTIon in threshold Ton value field
 // Use @TOFF@ string in SENSOR_DESCRIPTIon in threshold TOFF value field
-#define DESCRIPTION "{ 'mac': '@MAC@', 'name': 'Heating', 'description': 'Sensor description', 'type': 'heating', 'observes': [ 'temperature' ], 'threshold': [ { 'id': 'TOFF', 'name': 'Temperatura spegnimento', 'type': 'Integer', 'value' : '@TOFF@' }, { 'id': 'TON', 'name': 'Temperatura accensione', 'type': 'Integer', 'value' : '@TON@' } ] }"
+#define DESCRIPTION "{ 'mac': '@MAC@', 'name': 'Heating', 'description': 'Sensor description', 'type': 'heating', 'deviceStatus':'@DEVSTATUS@', 'observes': [ 'temperature' ], 'threshold': [ { 'id': 'TOFF', 'name': 'Temperatura spegnimento', 'type': 'Integer', 'value' : '@TOFF@' }, { 'id': 'TON', 'name': 'Temperatura accensione', 'type': 'Integer', 'value' : '@TON@' } ] }"
 
 #define TON_THRESHOLD_DEFAULT 19
 #define TOFF_THRESHOLD_DEFAULT 21
@@ -144,14 +144,13 @@ class HeatingDevice : public Device {
       discoveryMessage.replace("@TON@", String(TEMPERATURE_ON));
       discoveryMessage.replace("@TOFF@", String(TEMPERATURE_OFF));
       discoveryMessage.replace("@MAC@", macAddress);
-
+      discoveryMessage.replace("@DEVSTATUS@", deviceStatus ? "on" : "off");
+      
       return discoveryMessage;
     }
 
     void handleStatusOnServerReq(){
       String description = generateDiscoveryDescriptionMQTT();
       mqttClient->publish(TOPIC_DISCOVERY, description);
-
-      comunicateStatusChangeMQTT();
     }
 };

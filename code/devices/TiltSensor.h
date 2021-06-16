@@ -1,5 +1,5 @@
 // Use @MAC@ and MAC address will be added automatically
-#define DESCRIPTION "{ 'mac': '@MAC@', 'name': 'Tilt sensor', 'description': '', 'type': 'sensor', 'sensors' : [{ 'id' : 'tilt', 'name' : 'Tilt sensor', 'measure' : 'tilt', 'unit of measure' : '' }] }"
+#define DESCRIPTION "{ 'mac': '@MAC@', 'name': 'Tilt sensor', 'description': '', 'type': 'sensor', 'sensors' : [{ 'id' : 'tilt', 'name' : 'Tilt sensor', 'measure' : 'tilt', 'unit of measure' : '', 'status' : '@TILTSTATUS@', 'value' : '@TILTVALUE@' }] }"
 
 #include "device.h"
 
@@ -17,7 +17,6 @@ class TiltSensor : public Device {
     boolean tiltStatus = true;
     byte tiltValue;
     long timeTemp = 0;
-
 
     void loopExtra() {
       if(millis() - timeTemp > 1000){
@@ -104,6 +103,8 @@ class TiltSensor : public Device {
     String generateDiscoveryDescriptionMQTT(){
       String discoveryMessage = DESCRIPTION;
       discoveryMessage.replace("@MAC@", macAddress);
+      discoveryMessage.replace("@TILTVALUE@", tiltValue ? "open" : "close");
+      discoveryMessage.replace("@TILTSTATUS@", tiltStatus ? "on" : "off");
 
       return discoveryMessage;
     }
@@ -111,7 +112,5 @@ class TiltSensor : public Device {
     void handleStatusOnServerReq(){
       String description = generateDiscoveryDescriptionMQTT();
       mqttClient->publish(TOPIC_DISCOVERY, description);
-      mqttClient->publish(TOPIC_TILT_STATUS, tiltStatus ? "on" : "off");
-
     }
 };

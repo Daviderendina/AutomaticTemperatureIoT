@@ -111,7 +111,7 @@ void simulationLoop(){
     }
     Serial.println(F("SIMULATION: Connected!"));
 
-    mqttClientSimulation.subscribe("rt/alert/windowOpen");
+    mqttClientSimulation.subscribe("rt2/alert/windowOpen");
   }
         
   mqttClientSimulation.loop();

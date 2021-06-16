@@ -77,6 +77,8 @@ void setup() {
   connectWifi();
   macAddr = WiFi.macAddress();
 
+  readValuesFromEEPROM(); 
+
   connectToMQTTBroker();
 
   performDiscovery();
@@ -100,8 +102,6 @@ void setup() {
   Serial.print("RSSI: ");
   rssiMeasures.printArray();
 
-  readValuesFromEEPROM();  
-  
   readSensors();
   
   writeValuesOnEEPROM();
