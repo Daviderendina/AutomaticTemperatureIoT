@@ -113,8 +113,6 @@ void mqttSetup(){
 void connectToMQTTBroker() {
   if (!mqttClient.connected()) {   // not connected
     Serial.print(F("\nConnecting to MQTT broker..."));
-    String lastWillMsg = macAddr + " off";
-    mqttClient.setWill(TOPIC_DISCOVERY, lastWillMsg.c_str());
     while (!mqttClient.connect(MQTT_CLIENTID, MQTT_USERNAME, MQTT_PASSWORD)) {
       Serial.print(F("."));
       delay(1000);
