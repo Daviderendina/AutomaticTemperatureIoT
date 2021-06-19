@@ -91,6 +91,8 @@ class TiltSensor : public Device {
     void handleStatusChangeReq(String payload){
       if (payload == "on") {
         tiltStatus = true;
+        tiltValue = digitalRead(TILT);
+        comunicateNewTiltMQTT(tiltValue);
         Serial.println(F("TL: Request received: status on"));
       } else if (payload == "off") {
         tiltStatus = false;

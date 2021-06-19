@@ -94,10 +94,8 @@ class Device {
     }
 
     static void newMessageReceivedMQTT(MQTTClient *client, char topic[], char bytes[], int length){
-      // dal client prendo il campo ref e mi ritrovo il mio obj
-
       Device *thisDevice = (Device*) client->ref;
-      Serial.print(thisDevice->macAddress);
+      Serial.print(thisDevice->deviceID);
       Serial.print(F(": Incoming MQTT message: "));
       Serial.print(topic);
       Serial.print(F(" - "));
@@ -126,10 +124,6 @@ class Device {
             discoveryEnded = true;
             Serial.print(deviceID);
             Serial.println(F(": discovery phase finished"));
-            Serial.print(deviceID);
-            //Serial.print(F(": unsubscribed from topic"));
-            //Serial.println(TOPIC_DISCOVERY_RESPONSE);
-            //mqttClient->unsubscribe(TOPIC_DISCOVERY_RESPONSE);
             subscribeMQTTTopics();
         }
     }
@@ -154,8 +148,9 @@ class Device {
             discoveryStarted = false;
             discoveryEnded = false;
             mqttClient->subscribe(TOPIC_DISCOVERY_RESPONSE);
+            
+            subscribeMQTTTopics();
         }
-      subscribeMQTTTopics();
     }
 
     void subscribeSingleTopic(String topic){
@@ -183,7 +178,7 @@ class Device {
             posEnd1 = topic1.indexOf('/') + 1;
             posEnd2 = topic2.indexOf('/') + 1;
 
-            if(t1 != t2 && (t1 != "+/" && t2 != "+/")){
+            if(t1 != t2 && !isWildcard(t1) && !isWildcard(t2)){
               Serial.print(F("No match found between topics "));
               Serial.print(topic1);
               Serial.print(" ");
@@ -191,7 +186,11 @@ class Device {
               return false;
             }
         }
-        return topic1 == topic2;
+        return topic1 == topic2 || (isWildcard(topic1) || isWildcard(topic2));
+    }
+
+    bool isWildcard(String s){
+      return s == "+/" || s == "+" || s == "#/" || s == "#";
     }
 
     virtual void subscribeMQTTTopics() = 0;
