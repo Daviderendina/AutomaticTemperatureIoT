@@ -14,19 +14,35 @@
         console.log(data);   
     });
 </script>
-    <body class="vsc-initialized">        
-        <div class="container py-3"> 
-            <header>
-                <div class="d-flex flex-column flex-md-row align-items-center pb-3 mb-4 border-bottom">
-                    <a href="/" class="d-flex align-items-center text-dark text-decoration-none"></a>
-                    <span class="fs-4">Temperature control</span>
+
+    <body class="vsc-initialized">  
+        <nav class="navbar navbar-light bg-light">
+            <div class="container-fluid">
+                <a class="navbar-brand">Home Temperature</a>
+                <div class="d-flex">                                       
+                    <button type="button" class="btn btn-outline-light" style="border: 1px solid rgba(0,0,0,.125); color:black">
+                        Windows Count
+                        <span class="badge badge-success  btn-secondary">{{windowCount}}</span>  
+                    </button>
+                    <button type="button" class="btn btn-outline-light" style="border: 1px solid rgba(0,0,0,.125); color:black">
+                        Devices on
+                        <span class="badge badge-success  btn-secondary">{{deviceCount}}</span>  <!-- qui ci sarebbe da inserire poi il device count -->
+                    </button>
                 </div>
-            </header>    
+            </div>
+        </nav>        
+        <div class="container py-3"> 
+                
             {% if l_will == True %}
                 <div class="alert alert-danger" role="alert">
                     The device with this MAC Address <b>{{mac_add}}</b>, has been shuted down. Something went wrong.
                 </div>
             {% endif %}       
+            {% if a_mes|length > 5 %}
+                <div class="alert alert-danger" role="alert">
+                    {{a_mes}}
+                </div>
+            {% endif %}
             {% if alert|length > 0 %}           
             <div class="row" > 
                 <div class="card">                   
@@ -46,37 +62,7 @@
                 </div> 
             </div>  
             {% endif %}            
-            <div style="width: 100%; margin-top: 23px; height: 2px;"> </div>              
-            <div class="row"> 
-            {% for sensore in update %}
-                {% for prova in status %}                
-                    {% if update[sensore]['name'] == status[prova]['name'] %} 
-                        <div class="col">
-                            <div class="card">
-                                <div class="card-body">                                      
-                                    <form method="POST"> 
-                                        <div class="row">
-                                            <div class="col">
-                                                {{update[sensore]['name']}} : {{update[sensore]['value']}}
-                                                <input type="hidden" name="cambio_valore" value="{{status[prova]['value']}}">
-                                                <input type="hidden" name="invia_valore" value="{{prova}}">
-                                            </div>
-                                            <div class="col">
-                                                {%if status[prova]['value'] == "off" %}
-                                                    <input type="submit" class="btn btn-success" style="width: 100%;" value="{{status[prova]['value']}}">
-                                                {% else %}
-                                                    <input type="submit" class="btn btn-danger" style="width: 100%;" value="{{status[prova]['value']}}">
-                                                {% endif %}  
-                                            </div>    
-                                        </div>   
-                                    </form> 
-                                </div> 
-                            </div>
-                        </div> 
-                    {% endif %}                         
-                {% endfor %}
-            {% endfor %}
-            </div>
+            <div style="width: 100%; margin-top: 23px; height: 2px;"> </div>
             <main>                 
                 <div style="width: 100%; margin-top: 23px; height: 2px;"> </div>                    
                 <div class="row row-cols-1 row-cols-md-4 mb-4">                    
@@ -84,7 +70,15 @@
                         <div class="col">
                             <div class="card mb-4 rounded-3 shadow-sm">
                                 <div class="card-header py-3">
-                                <h4 class="my-0 fw-normal">{{row['name']}}</h4>
+                                    {% if 'deviceStatus' in row %}
+                                        {% if row['deviceStatus']['status']== "off" %}
+                                            <h4 class="my-0 fw-normal">{{row['name']}}</h4><span class="badge badge-success  btn-danger">{{row['deviceStatus']['status']}}</span>  
+                                        {% else %}         
+                                            <h4 class="my-0 fw-normal">{{row['name']}}</h4><span class="badge badge-success  btn-success">{{row['deviceStatus']['status']}}</span>  
+                                        {% endif %}
+                                    {%else %}                                    
+                                        <h4 class="my-0 fw-normal">{{row['name']}}</h4>
+                                    {% endif %}
                                 </div>
                                 <div class="card-body">
                                     <h4 class="card-title pricing-card-title"><small class="text-muted fw-light">{{row['mac']}}</small></h4>
@@ -109,6 +103,24 @@
                                             </div>   
                                         </form>                                      
                                     {% endfor %} 
+                                    {% for elemento in row['status_update']['status'] %}
+                                        <form method="POST" style="margin-top: 5px;"> 
+                                            <div class="row">
+                                                <div class="col">
+                                                    {{row['status_update']['update'][elemento]['name']}} : {{row['status_update']['update'][elemento]['value']}}
+                                                    <input type="hidden" name="cambio_valore" value="{{row['status_update']['status'][elemento]['value']}}">
+                                                    <input type="hidden" name="invia_valore" value="{{row['status_update']['status'][elemento]['topic']}}">
+                                                </div>
+                                                <div class="col">
+                                                    {%if row['status_update']['status'][elemento]['value'] == "on" %} <!-- se io ho on, il dispositivo è on -->
+                                                        <input type="submit" class="btn btn-success" style="width: 100%;" value="Acceso">
+                                                    {% else %}
+                                                        <input type="submit" class="btn btn-danger" style="width: 100%;" value="Spento">
+                                                    {% endif %}  
+                                                </div>    
+                                            </div>   
+                                        </form> 
+                                    {% endfor %}
                                 </div>
                             </div>
                         </div>
